@@ -1,0 +1,168 @@
+16s qiime commands
+
+
+1) Import data using qiime
+
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path Reads \
+  --input-format CasavaOneEightSingleLanePerSampleDirFmt \
+  --output-path 16s_reads.qza
+
+
+2) Examine quality of reads
+
+qiime demux summarize \
+  --i-data 16s_reads.qza \
+  --o-visualization 16s_reads.qzv
+
+
+3) Using Dada2 to process reads
+
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs 16s_reads.qza \
+  --p-trim-left-f 0 \
+  --p-trim-left-r 0 \
+  --p-trunc-len-f 140 \
+  --p-trunc-len-r 140 \
+  --o-table table_16S.qza \
+  --o-representative-sequences rep-seqs_16S.qza \
+  --o-denoising-stats denoising-stats_16S.qza
+
+4)  Creating visulization files to inspect the tables
+
+qiime feature-table summarize \
+  --i-table table_16S.qza \
+  --o-visualization table_16s.qzv \
+  --m-sample-metadata-file metadata.NOD_16s.tsv
+
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs_16S.qza \
+  --o-visualization rep-seqs_16s.qzv
+
+5)
+
+qiime metadata tabulate \
+  --m-input-file denoising-stats_16S.qza \
+  --o-visualization denoising-stats_16s.qzv
+
+
+
+6) Assign taxonomy using pre-tained SILVA classifier
+
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier silva-132-99-515-806-nb-classifier.qza\
+  --i-reads rep-seqs_16S.qza \
+  --o-classification taxonomy_16s_silva.qza
+
+qiime metadata tabulate \
+  --m-input-file taxonomy_16s_silva.qza \
+  --o-visualization taxonomy_16s_silva.qzv
+
+
+
+7) Filtering contaminants ids found using decontam(R) with negative controls
+
+qiime feature-table filter-features \
+ --i-table table_16s.qza \
+ --m-metadata-file Contam_16s.txt \
+ --p-exclude-ids \
+ --o-filtered-table table_16s_filtered_1.qza
+
+qiime feature-table summarize \
+  --i-table table_16s_filtered_1.qza \
+  --o-visualization table_16s_filtered_1.qzv \
+  --m-sample-metadata-file metadata.NOD_16s.tsv
+  
+ qiime taxa barplot \
+  --i-table table_16s_filtered_1.qza \
+  --i-taxonomy taxonomy_16s_silva.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --o-visualization taxa-bar-plots_16s_filtered_1.qzv
+
+
+8) Filtering/Removing negative control samples
+
+qiime feature-table filter-samples \
+  --i-table table_16s_filtered_1.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --p-where "[Type]='Control'" \
+  --p-exclude-ids  \
+  --o-filtered-table table_16s_filtered_2.qza
+
+qiime feature-table summarize \
+  --i-table table_16s_filtered_2.qza \
+  --o-visualization table_16s_filtered_2.qzv \
+  --m-sample-metadata-file metadata.NOD_16s.tsv
+
+
+9) Taxa_barplot
+
+qiime taxa barplot \
+  --i-table table_16s_filtered_2.qza \
+  --i-taxonomy taxonomy_16s_silva.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --o-visualization taxa-bar-plots_16s_filtered_2.qzv
+
+ 
+
+10) Tree construction using qiime mafft
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep-seqs_16S.qza \
+  --o-alignment aligned-rep-seqs_16s.qza \
+  --o-masked-alignment masked-aligned-rep-seqs_16s.qza \
+  --o-tree unrooted-tree_16s.qza \
+  --o-rooted-tree rooted-tree_16s.qza
+
+11) Alpha rarefaction :
+
+qiime diversity alpha-rarefaction \
+  --i-table table_16s_filtered_2.qza \
+  --p-max-depth 8000 \
+  --p-metrics shannon \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --o-visualization alpha_rarefact_16s_shannon.qzv
+  
+qiime diversity alpha-rarefaction \
+  --i-table table_16s_filtered_2.qza \
+  --p-max-depth 8000 \
+  --p-metrics observed_features\
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --o-visualization alpha_rarefact_16s_features.qzv
+
+
+
+12) Diversity analysis
+
+ 
+  qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree_16s.qza \
+  --i-table table_16s_filtered_2.qza \
+  --p-sampling-depth 5910 \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --output-dir core-metrics-results-filtered-4
+  
+
+13) Alpha and Beta diversity significance
+  
+ 
+  qiime diversity alpha-group-significance \
+ --i-alpha-diversity shannon_vector.qza \
+ --m-metadata-file metadata.NOD_16s.tsv \
+ --o-visualization shannon_significance.qzv
+ 
+ qiime diversity beta-group-significance \
+  --i-distance-matrix unweighted_unifrac_distance_matrix.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --m-metadata-column Type \
+  --o-visualization unweighted_unifrac_significance.qzv
+
+ qiime diversity beta-group-significance \
+  --i-distance-matrix weighted_unifrac_distance_matrix.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --m-metadata-column Type \
+  --o-visualization weighted_unifrac_significance.qzv
+
+

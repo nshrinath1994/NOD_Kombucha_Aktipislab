@@ -1,0 +1,153 @@
+ITS qiime commands
+
+1) Import data using qiime
+
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path Reads \
+  --input-format CasavaOneEightSingleLanePerSampleDirFmt \
+  --output-path ITS_reads.qza
+
+
+2)  Examine quality of reads
+
+qiime demux summarize \
+  --i-data ITS_reads.qza \
+  --o-visualization ITS_reads.qzv
+
+3) Using Dada2 to process reads
+
+qiime dada2 denoise-paired \
+  --i-demultiplexed-seqs ITS_reads.qza \
+  --p-trim-left-f 3 \
+  --p-trim-left-r 3 \
+  --p-trunc-len-f 215 \
+  --p-trunc-len-r 215 \
+  --o-table table_ITS.qza \
+  --o-representative-sequences rep-seqs_ITS.qza \
+  --o-denoising-stats denoising-stats_ITS.qza
+
+4) Creating visulization files to inspect the tables
+
+qiime feature-table summarize \
+  --i-table table_ITS.qza \
+  --o-visualization table_ITS.qzv \
+  --m-sample-metadata-file metadata.NOD_ITS.tsv
+
+qiime feature-table tabulate-seqs \
+  --i-data rep-seqs_ITS.qza \
+  --o-visualization rep-seqs_ITS.qzv
+
+5)
+
+qiime metadata tabulate \
+  --m-input-file denoising-stats_ITS.qza \
+  --o-visualization denoising-stats_ITS.qzv
+
+6) Assign taxonomy using pre-tained Greengenes classifier
+
+qiime feature-classifier classify-sklearn \
+  --i-classifier unite-ver8-99-classifier.qza \
+  --i-reads rep-seqs_ITS.qza \
+  --o-classification taxonomy_ITS.qza
+
+qiime metadata tabulate \
+  --m-input-file taxonomy_ITS.qza \
+  --o-visualization taxonomy_ITS.qzv
+
+
+7) Filtering contaminants ids found using decontam(R) with negative controls
+
+qiime feature-table filter-features \
+ --i-table table_ITS.qza \
+ --m-metadata-file Contam_ITS.txt \
+ --p-exclude-ids \
+ --o-filtered-table table_ITS_filtered_1.qza
+
+qiime feature-table summarize \
+  --i-table table_ITS_filtered_1.qza \
+  --o-visualization table_ITS_filtered_1.qzv \
+  --m-sample-metadata-file metadata.NOD_ITS.tsv
+
+
+8) Filtering/Removing negative control samples
+
+qiime feature-table filter-samples \
+  --i-table table_ITS_filtered_1.qza \
+  --m-metadata-file metadata.NOD_ITS.tsv \
+  --p-where "[Type]='Control'" \
+  --p-exclude-ids  \
+  --o-filtered-table table_ITS_filtered_2.qza
+
+qiime feature-table summarize \
+  --i-table table_ITS_filtered_2.qza \
+  --o-visualization table_ITS_filtered_2.qzv \
+  --m-sample-metadata-file metadata.NOD_ITS.tsv
+
+
+9) Taxa_barplot
+
+qiime taxa barplot \
+  --i-table table_ITS_filtered_2.qza \
+  --i-taxonomy taxonomy_ITS.qza \
+  --m-metadata-file metadata.NOD_ITS.tsv \
+  --o-visualization taxa-bar-plots_ITS_filtered_2.qzv
+
+  
+  
+ 
+
+10) Tree construction using qiime maffe
+
+qiime phylogeny align-to-tree-mafft-fasttree \
+  --i-sequences rep-seqs_ITS.qza \
+  --o-alignment aligned-rep-seqs_ITS.qza \
+  --o-masked-alignment masked-aligned-rep-seqs_ITS.qza \
+  --o-tree unrooted-tree_ITS.qza \
+  --o-rooted-tree rooted-tree_ITS.qza
+
+
+ 11) Alpha rarefaction
+ 
+qiime diversity alpha-rarefaction \
+  --i-table table_ITS_filtered_2.qza \
+  --p-max-depth 5000 \
+  --p-metrics shannon \
+  --m-metadata-file metadata.NOD_ITS.tsv \
+  --o-visualization alpha_rarefact_ITS_shannon.qzv 
+  
+qiime diversity alpha-rarefaction \
+  --i-table table_ITS_filtered_2.qza \
+  --p-max-depth 5000 \
+  --p-metrics observed_features \
+  --m-metadata-file metadata.NOD_ITS.tsv \
+  --o-visualization alpha_rarefact_ITS_features.qzv   
+
+
+
+
+12) Diversity analysis
+
+
+qiime diversity core-metrics-phylogenetic \
+  --i-phylogeny rooted-tree_ITS.qza \
+  --i-table table_ITS_filtered_2.qza \
+  --p-sampling-depth 1221 \
+  --m-metadata-file metadata.NOD_ITS.tsv \
+  --output-dir core-metrics-results-filtered-2
+
+
+13) Alpha and Beta diversity significance
+
+qiime diversity alpha-group-significance \
+ --i-alpha-diversity shannon_vector.qza \
+ --m-metadata-file metadata.NOD_ITS.tsv \
+ --o-visualization shannon_significance.qzv
+ 
+ qiime diversity beta-group-significance \
+  --i-distance-matrix unweighted_unifrac_distance_matrix.qza \
+  --m-metadata-file metadata.NOD_ITS.tsv \
+  --m-metadata-column Type \
+  --o-visualization unweighed_unifrac_significance.qzv
+ 
+  
