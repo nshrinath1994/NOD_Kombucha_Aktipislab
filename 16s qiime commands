@@ -166,3 +166,105 @@ qiime diversity alpha-rarefaction \
   --o-visualization weighted_unifrac_significance.qzv
 
 
+
+qiime feature-table group \
+  --i-table table_16s_filtered_2.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --m-metadata-column Type \
+  --p-axis sample \
+  --p-mode sum \
+  --o-grouped-table grouped_table_2_type.qza
+  
+  
+  qiime feature-table summarize \
+  --i-table grouped_table_2_type.qza \
+  --o-visualization grouped_table_2_type.qzv
+  
+  
+  
+  
+  qiime feature-table filter-samples \
+  --i-table table_16s_filtered_2.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --p-where '[Type]="Kombucha-Day1"' \
+  --o-filtered-table filtered_table_kombuchaday1.qza
+  
+  
+  
+  qiime feature-table summarize \
+  --i-table filtered_table_kombuchaday1.qza \
+  --o-visualization filtered_table_kombuchaday1.qzv
+
+ qiime feature-table filter-samples \
+  --i-table table_16s_filtered_2.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --p-where '[Type]="Kombucha-Day30"' \
+  --o-filtered-table filtered_table_kombuchaday30.qza
+  
+  
+  
+  qiime feature-table summarize \
+  --i-table filtered_table_kombuchaday30.qza \
+  --o-visualization filtered_table_kombuchaday30.qzv
+  
+  
+  
+  qiime feature-table filter-samples \
+  --i-table table_16s_filtered_2.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --p-where '[Type]="Tea-Day1"' \
+  --o-filtered-table filtered_table_teaday1.qza
+  
+  
+  
+  qiime feature-table summarize \
+  --i-table filtered_table_teaday1.qza \
+  --o-visualization filtered_table_teaday1.qzv
+  
+  
+  
+  qiime feature-table filter-samples \
+  --i-table table_16s_filtered_2.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --p-where '[Type]="Tea-Day30"' \
+  --o-filtered-table filtered_table_teaday30.qza
+  
+  
+  
+  qiime feature-table summarize \
+  --i-table filtered_table_teaday30.qza \
+  --o-visualization filtered_table_teaday30.qzv
+  
+  
+  
+  qiime feature-table filter-samples \
+  --i-table table_16s_filtered_2.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --p-where '[isol_growth_condt]="Tea"' \
+  --o-filtered-table filtered_table_tea.qza
+  
+  
+  
+  qiime feature-table summarize \
+  --i-table filtered_table_tea.qza \
+  --o-visualization filtered_table_tea.qzv
+  
+  
+  
+  qiime feature-table filter-samples \
+  --i-table table_16s_filtered_2.qza \
+  --m-metadata-file metadata.NOD_16s.tsv \
+  --p-where '[isol_growth_condt]="Kombucha"' \
+  --o-filtered-table filtered_table_kombucha.qza
+  
+  
+  
+  qiime feature-table summarize \
+  --i-table filtered_table_kombucha.qza \
+  --o-visualization filtered_table_kombucha.qzv
+  
+  
+  
+  
+  
+  
